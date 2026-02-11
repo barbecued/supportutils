@@ -336,7 +336,6 @@ basic_healthcheck() {
 		rm -f $TOPTMP
 	fi
 
-
 	if grep 'security=apparmor' /proc/cmdline &>/dev/null; then
 		log_write $AARTMP "#==[ Summary ]======================================#"
 		log_write $AARTMP "# AppArmor REJECT Messages"
@@ -371,6 +370,8 @@ basic_healthcheck() {
 
 	cat $PSPTMP >> $LOG/$OF
 	rm $PSPTMP
+
+	rpm_verify $OF procps
 
 	echolog Done
 }
