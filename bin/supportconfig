@@ -709,7 +709,8 @@ boot_info() {
 	conf_files $OF /proc/cmdline /etc/sysconfig/kernel $FILES
 
 	log_cmd $OF 'ls -lR --time-style=long-iso /boot/'
-	log_cmd $OF "lsinitrd -k $(uname -r)"
+	log_cmd $OF echo "Running: $(uname -r)"; echo "Initrd:  $(readlink -f /boot/initrd)"; [[ "$(readlink -f /boot/initrd)" == *"$(uname -r)"* ]] && echo "Currnet running kernel matches /boot/initrd or symlink" || echo "**WARNING -- MISMATCH**: Running kernel DOES NOT match /boot/initrd or symlink. This could be due to a different kernel installed but not rebooted, booted to a different kernel, chrooted in rescue, or other cause.  "
+	log_cmd $OF 'lsinitrd $(readlink -f /boot/initrd)'
 	(( $ADD_OPTION_LOGS )) && log_files $OF 0 $FILES || log_files $OF $VAR_OPTION_LINE_COUNT $FILES
 	log_cmd $OF 'journalctl --boot=0 --no-pager --disk-usage'
 	if [[ -x $JOURNALCTL_BIN ]]; then
