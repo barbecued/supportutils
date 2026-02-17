@@ -1115,6 +1115,12 @@ systemd_info() {
 	fi
 	log_cmd $OF 'ls -alR /etc/systemd/'
 	log_cmd $OF 'ls -alR /usr/lib/systemd/'
+
+    for i in $($SYSTEMCTL_BIN --no-pager list-unit-files 2>/dev/null | awk '{print $1}' | grep -vE '^UNIT |^LOAD |^ACTIVE |^SUB |^To |^[[:digit:]]* ')
+    do
+        # 'systemctl cat' automatically finds the main file AND all drop-ins
+        log_cmd $OF "systemctl cat '$i'"
+    done
 	echolog Done
 }
 
