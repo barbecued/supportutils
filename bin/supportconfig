@@ -669,9 +669,10 @@ boot_info() {
 	fi
 	if $RPM_BIN -q grub2 &> /dev/null; then
 		rpm_verify $OF grub2
-		conf_files $OF /etc/default/grub /etc/default/grub_installdevice /boot/grub2/device.map
+		conf_files $OF /etc/default/grub /etc/default/grub_installdevice /boot/grub2/device.map /boot/grub2/grubenv
 		BKOP=$ADD_OPTION_LOGS
-		ADD_OPTION_LOGS=1 conf_files $OF /boot/grub2/grub.cfg
+		ADD_OPTION_LOGS=1
+		conf_files $OF /boot/grub2/grub.cfg
 		ADD_OPTION_LOGS=$BKOP
 	fi
 	if $RPM_BIN -q lilo &> /dev/null; then
