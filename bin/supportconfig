@@ -956,6 +956,12 @@ pam_info() {
 		log_write $OF "#==[ Files in /etc/pam.d ]==========================#"
 		[[ -d /etc/pam.d ]] && FILES="$(find -L /etc/pam.d/ -type f | sort)" || FILES=""
 		conf_files $OF $FILES
+		if [[ -d /usr/lib/pam.d ]]; then
+			log_write $OF "#==[ Files in /usr/lib/pam.d ]==========================#"
+			log_cmd $OF "ls -lt --time-style=long-iso /usr/lib/pam.d/"
+			FILES="$(find -L /usr/lib/pam.d/ -type f | sort)" || FILES=""
+			conf_files $OF $FILES
+		fi
 		echolog Done
 	else
 		log_entry $OF note "Restricted"
