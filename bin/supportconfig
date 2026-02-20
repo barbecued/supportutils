@@ -1118,15 +1118,13 @@ systemd_info() {
 		do
 			log_cmd $OF2 "systemctl status '$i'"
 		done
+		for i in $($SYSTEMCTL_BIN --no-pager list-unit-files --type=service 2>/dev/null | sed 's/^[^-_:\\a-zA-Z0-9]*//' | grep -vE '^UNIT |^LOAD |^ACTIVE |^SUB |^To |^[[:digit:]]* ' | awk '{print $1}')
+		do
+			log_cmd $OF "systemctl cat '$i'"
+		done
 	fi
 	log_cmd $OF 'ls -alR /etc/systemd/'
 	log_cmd $OF 'ls -alR /usr/lib/systemd/'
-
-    for i in $($SYSTEMCTL_BIN --no-pager list-unit-files 2>/dev/null | awk '{print $1}' | grep -vE '^UNIT |^LOAD |^ACTIVE |^SUB |^To |^[[:digit:]]* ')
-    do
-        # 'systemctl cat' automatically finds the main file AND all drop-ins
-        log_cmd $OF "systemctl cat '$i'"
-    done
 	echolog Done
 }
 
