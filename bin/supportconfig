@@ -336,7 +336,6 @@ basic_healthcheck() {
 		rm -f $TOPTMP
 	fi
 
-
 	if grep 'security=apparmor' /proc/cmdline &>/dev/null; then
 		log_write $AARTMP "#==[ Summary ]======================================#"
 		log_write $AARTMP "# AppArmor REJECT Messages"
@@ -372,6 +371,8 @@ basic_healthcheck() {
 	cat $PSPTMP >> $LOG/$OF
 	rm $PSPTMP
 
+	rpm_verify $OF procps
+
 	echolog Done
 }
 
@@ -402,7 +403,6 @@ rpm_info() {
 		printf "%-63s %-35s %s\n" SIGNATURE VENDOR PACKAGE >> $LOGFILE
 		$RPM_BIN -qa --queryformat "%{SIGPGP:pgpsig}  %-35{VENDOR}  %{NAME}-%{VERSION}-%{RELEASE}\n" | sort -k 11 -t " " -i >> $LOGFILE 2>&1
 		log_write $RPMFILE
-		# Jul 12, 2018 ; Added by Ahmad AL Zayed to get a list of RPM DB Backups 
 		RETURN=$(grep RPMDB_BACKUP_DIR /etc/sysconfig/backup 2>/dev/null | grep -v "^#" | cut -d= -f2 | tr -d "\"")
 		[[ -d $RETURN ]] && { log_cmd $RPMFILE "ls -ltr $RETURN" ;} 
 	fi
@@ -662,6 +662,7 @@ boot_info() {
 		echo -e "This could be due to a different kernel installed but not rebooted, booted to a different kernel, chrooted in rescue, or other cause.\n" >> $LOG/$OF
 	fi
 	# Feb 6, 2024 - Ahmad Alzayed - Added grep -E '[0-9]' to avoid getting duplicated output
+
 	KERNELS=$(cat $LOG/$RPMFILE | grep '^kernel-' | grep -v 'kernel-source' | awk '{print $1}' | grep -E '[0-9]')
 	for KERNEL in $KERNELS
 	do
@@ -674,9 +675,10 @@ boot_info() {
 	fi
 	if $RPM_BIN -q grub2 &> /dev/null; then
 		rpm_verify $OF grub2
-		conf_files $OF /etc/default/grub /etc/default/grub_installdevice /boot/grub2/device.map
+		conf_files $OF /etc/default/grub /etc/default/grub_installdevice /boot/grub2/device.map /boot/grub2/grubenv
 		BKOP=$ADD_OPTION_LOGS
-		ADD_OPTION_LOGS=1 conf_files $OF /boot/grub2/grub.cfg
+		ADD_OPTION_LOGS=1
+		conf_files $OF /boot/grub2/grub.cfg
 		ADD_OPTION_LOGS=$BKOP
 	fi
 	if $RPM_BIN -q lilo &> /dev/null; then
@@ -782,6 +784,7 @@ bpf_info() {
 				fi
 			fi
 		else
+			log_entry $OF note "Install bpftool to display more information."
 			log_cmd $OF 'grep -E bpf_prog_[a-f0-9]{16} /proc/kallsyms'
 		fi
 		echolog Done
@@ -954,11 +957,16 @@ pam_info() {
 		log_write $OF "#==[ Files in /etc/security ]=======================#"
 		[[ -d /etc/security ]] && FILES="$(find -L /etc/security/ -type f -name \*conf)" || FILES=""
 		conf_files $OF $FILES
-		# Nov 24, 2023 ,, Added by Ahmad Alzayed
 		log_cmd $OF "ls -lt --time-style=long-iso /etc/pam.d/"
 		log_write $OF "#==[ Files in /etc/pam.d ]==========================#"
 		[[ -d /etc/pam.d ]] && FILES="$(find -L /etc/pam.d/ -type f | sort)" || FILES=""
 		conf_files $OF $FILES
+		if [[ -d /usr/lib/pam.d ]]; then
+			log_write $OF "#==[ Files in /usr/lib/pam.d ]==========================#"
+			log_cmd $OF "ls -lt --time-style=long-iso /usr/lib/pam.d/"
+			FILES="$(find -L /usr/lib/pam.d/ -type f | sort)" || FILES=""
+			conf_files $OF $FILES
+		fi
 		echolog Done
 	else
 		log_entry $OF note "Restricted"
@@ -2528,7 +2536,7 @@ crash_info() {
 	log_cmd $OF 'sysctl kernel 2>/dev/null | grep panic'
 	if rpm -q kdump &>/dev/null ; then
 		if [[ -x $READ_KDUMP_CONFIG ]]; then
-			. $READ_KDUMP_CONFIG
+			source $READ_KDUMP_CONFIG 2>&1 | grep -v "deprecated, ignoring"
 			DUMPDIR=${KDUMP_SAVEDIR#file://}
 		else
 			DUMPDIR=''
@@ -2835,10 +2843,8 @@ ha_info() {
 			log_cmd $OF 'chronyc sources -v'
 			log_cmd $OF 'crm_mon -r -1'
 			log_cmd $OF 'crm_mon -r -n -1'
-			# Display node attributes ; Nov 15, 2018 ; Added by Ahmad Al Zayed
 			log_cmd $OF 'crm_mon -A -1' 
 			log_cmd $OF 'corosync-cfgtool -s'
-			# More corosync information ; Dec 6, 2018 ; Added by Ahmad Al Zayed
 			log_cmd $OF 'crm corosync status' 
 			log_cmd $OF 'crm configure show'
 			conf_files $OF $CONF_FILES
@@ -3091,7 +3097,6 @@ drbd_info() {
 		log_cmd $OF "grep drbd /proc/modules"
 		log_cmd $OF "modinfo drbd"
 		log_cmd $OF "drbd-overview" 
-		# Added By Ahmad Al Zayed - Feb 21, 2019 to get few drbd output & configuration 
 		log_cmd $OF "drbdadm status" 
 		log_cmd $OF "drbdadm dump"
 		log_cmd $OF "cat /proc/drbd"
