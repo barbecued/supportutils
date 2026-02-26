@@ -195,7 +195,7 @@ EXT_SCALING_PID_LIMIT=1000
 EXT_SCALING_IRQ_LIMIT=1000
 EXT_SCALING_EXEC_LIMIT=9000000
 
-PROC_FILES="/proc/mounts /proc/zoneinfo"
+PROC_FILES="/proc/mounts /proc/zoneinfo /proc/softirqs"
 PROC_DIRS_DEPTH_ONE="/proc/sys/kernel/ /proc/scsi/ /proc/net/ /proc/dasd/"
 PROC_DIRS_DEPTH_FULL="/proc/irq/ /proc/sys/"
 PROC_DIRS_DEPTH_ONE_FILTER_OUT="rt_acct$|/sched_domain/"
